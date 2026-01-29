@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIF Neuron Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            font-weight: 500;
+            color: #111;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .description {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .model-box {
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .model-box h3 {
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .model-box.standard h3 { color: #d64545; }
+        .model-box.exponential h3 { color: #2a9d8f; }
+
+        .model-box p {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .equation {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.85em;
+            color: #555;
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .definitions {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            margin-bottom: 30px;
+        }
+
+        .definitions h3 {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .def-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px 24px;
+        }
+
+        .def-item {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .def-item strong {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .simulation {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+
+        .sim-layout {
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            gap: 25px;
+        }
+
+        canvas {
+            width: 100%;
+            border-radius: 4px;
+            background: #fff;
+            border: 1px solid #eee;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.8em;
+            color: #666;
+            justify-content: center;
+        }
+
+        .time-scrubber {
+            margin-top: 12px;
+            padding: 10px 0;
+        }
+
+        .time-scrubber label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .time-scrubber input[type="range"] {
+            width: 100%;
+        }
+
+        .time-scrubber.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .time-indicator {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 1px;
+        }
+
+        .controls h3 {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .control-group label span {
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #333;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            margin-bottom: 8px;
+            background: #fff;
+            color: #333;
+            transition: background 0.15s;
+        }
+
+        button:hover {
+            background: #f5f5f5;
+        }
+
+        .btn-primary {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+
+        .btn-primary:hover {
+            background: #444;
+        }
+
+        .spike-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .spike-section h4 {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .btn-spike {
+            background: #f8f8f8;
+            border-color: #ccc;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.8em;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            color: #666;
+        }
+
+        .stats-row span:last-child {
+            font-weight: 500;
+            color: #333;
+        }
+
+        kbd {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 800px) {
+            .description, .sim-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LIF Neuron: Standard vs Exponential PSC</h1>
+
+        <div class="description">
+            <div class="model-box standard">
+                <h3>Standard LIF</h3>
+                <p>Membrane potential jumps instantly when a spike arrives.</p>
+                <div class="equation">V += weight</div>
+            </div>
+
+            <div class="model-box exponential">
+                <h3>Exponential PSC</h3>
+                <p>Synaptic current decays exponentially with time constant τ<sub>syn</sub>.</p>
+                <div class="equation">I(t) = w · e<sup>−t/τ</sup></div>
+            </div>
+        </div>
+
+        <div class="definitions">
+            <h3>Variable Definitions</h3>
+            <div class="def-grid">
+                <div class="def-item"><strong>V</strong> — membrane potential (mV)</div>
+                <div class="def-item"><strong>E<sub>L</sub></strong> — resting potential (mV)</div>
+                <div class="def-item"><strong>V<sub>th</sub></strong> — threshold potential (mV)</div>
+                <div class="def-item"><strong>τ<sub>m</sub></strong> — membrane time constant (ms)</div>
+                <div class="def-item"><strong>τ<sub>syn</sub></strong> — synaptic time constant (ms)</div>
+                <div class="def-item"><strong>I<sub>syn</sub></strong> — synaptic current</div>
+                <div class="def-item"><strong>w</strong> — synaptic weight</div>
+                <div class="def-item"><strong>t</strong> — time since spike (ms)</div>
+            </div>
+        </div>
+
+        <div class="simulation">
+            <div class="sim-layout">
+                <div>
+                    <canvas id="neuronCanvas" width="650" height="400"></canvas>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #d64545;"></div>
+                            <span>Standard V<sub>m</sub></span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #d64545; width: 2px; height: 12px;"></div>
+                            <span>Standard input</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #2a9d8f;"></div>
+                            <span>Exp PSC V<sub>m</sub></span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #7c3aed;"></div>
+                            <span>Exp PSC I<sub>syn</sub></span>
+                        </div>
+                    </div>
+                    <div class="time-scrubber disabled" id="timeScrubber">
+                        <label>
+                            <span>Time Window</span>
+                            <span class="time-indicator" id="timeIndicator">0 - 250 ms</span>
+                        </label>
+                        <input type="range" id="timeSlider" min="0" max="100" value="100">
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <h3>Parameters</h3>
+
+                    <div class="control-group">
+                        <label>τ<sub>m</sub> (membrane) <span id="tauMValue">20</span> ms</label>
+                        <input type="range" id="tauM" min="5" max="50" value="20">
+                    </div>
+
+                    <div class="control-group">
+                        <label>τ<sub>syn</sub> (synaptic) <span id="tauSynValue">5</span> ms</label>
+                        <input type="range" id="tauSyn" min="1" max="20" value="5">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Weight <span id="weightValue">15</span></label>
+                        <input type="range" id="weight" min="5" max="40" value="15">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Threshold <span id="threshValue">-55</span> mV</label>
+                        <input type="range" id="thresh" min="-60" max="-40" value="-55">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Speed <span id="speedValue">2x</span></label>
+                        <input type="range" id="speed" min="1" max="10" value="2">
+                    </div>
+
+                    <button class="btn-primary" id="startBtn">▶ Start</button>
+                    <button id="resetBtn">Reset</button>
+
+                    <div class="spike-section">
+                        <h4>Input Spikes</h4>
+                        <button class="btn-spike" id="singleSpikeBtn">Send Spike <kbd>Space</kbd></button>
+                        <button class="btn-spike" id="burstBtn">Burst ×5</button>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stats-row">
+                            <span>Standard output</span>
+                            <span id="stdSpikes">0</span>
+                        </div>
+                        <div class="stats-row">
+                            <span>Exp PSC output</span>
+                            <span id="expSpikes">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('neuronCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+
+        let params = {
+            tauM: 20,
+            tauSyn: 5,
+            weight: 15,
+            thresh: -55,
+            EL: -70,
+            Vreset: -70,
+            tRef: 2,
+            dt: 0.5
+        };
+
+        let stdV = params.EL;
+        let expV = params.EL;
+        let Isyn = 0;
+        let stdRefrac = 0;
+        let expRefrac = 0;
+        let stdSpikeCount = 0;
+        let expSpikeCount = 0;
+
+        const maxPoints = 500;        // Points shown in view window
+        const maxHistory = 5000;      // Total points stored in history
+        let stdVHistory = [];
+        let expVHistory = [];
+        let IsynHistory = [];
+        let inputSpikes = [];
+        let stdOutputSpikes = [];
+        let expOutputSpikes = [];
+        let time = 0;
+
+        let running = false;
+        let simSpeed = 2;
+        let pendingSpikes = 0;
+        let viewOffset = 0;           // 0 = latest, higher = further back in time
+
+        const sliders = {
+            tauM: document.getElementById('tauM'),
+            tauSyn: document.getElementById('tauSyn'),
+            weight: document.getElementById('weight'),
+            thresh: document.getElementById('thresh'),
+            speed: document.getElementById('speed')
+        };
+
+        const displays = {
+            tauM: document.getElementById('tauMValue'),
+            tauSyn: document.getElementById('tauSynValue'),
+            weight: document.getElementById('weightValue'),
+            thresh: document.getElementById('threshValue'),
+            speed: document.getElementById('speedValue')
+        };
+
+        function updateParams() {
+            params.tauM = parseFloat(sliders.tauM.value);
+            params.tauSyn = parseFloat(sliders.tauSyn.value);
+            params.weight = parseFloat(sliders.weight.value);
+            params.thresh = parseFloat(sliders.thresh.value);
+            simSpeed = parseInt(sliders.speed.value);
+
+            displays.tauM.textContent = params.tauM;
+            displays.tauSyn.textContent = params.tauSyn;
+            displays.weight.textContent = params.weight;
+            displays.thresh.textContent = params.thresh;
+            displays.speed.textContent = simSpeed + 'x';
+        }
+
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', updateParams);
+        });
+
+        function simulationStep(hasInputSpike) {
+            const dt = params.dt;
+
+            if (hasInputSpike) {
+                inputSpikes.push(time);
+            }
+
+            if (stdRefrac > 0) {
+                stdRefrac -= dt;
+                stdV = params.Vreset;
+            } else {
+                const dV_std = (-(stdV - params.EL)) / params.tauM;
+                stdV += dV_std * dt;
+
+                if (hasInputSpike) {
+                    stdV += params.weight * 0.5;
+                }
+
+                if (stdV >= params.thresh) {
+                    stdOutputSpikes.push(time);
+                    stdV = params.Vreset;
+                    stdRefrac = params.tRef;
+                    stdSpikeCount++;
+                    document.getElementById('stdSpikes').textContent = stdSpikeCount;
+                }
+            }
+
+            if (expRefrac > 0) {
+                expRefrac -= dt;
+                expV = params.Vreset;
+            } else {
+                const dIsyn = -Isyn / params.tauSyn;
+                Isyn += dIsyn * dt;
+
+                if (hasInputSpike) {
+                    Isyn += params.weight * 2;
+                }
+
+                const dV_exp = (-(expV - params.EL) + Isyn) / params.tauM;
+                expV += dV_exp * dt;
+
+                if (expV >= params.thresh) {
+                    expOutputSpikes.push(time);
+                    expV = params.Vreset;
+                    expRefrac = params.tRef;
+                    expSpikeCount++;
+                    document.getElementById('expSpikes').textContent = expSpikeCount;
+                }
+            }
+
+            stdVHistory.push(stdV);
+            expVHistory.push(expV);
+            IsynHistory.push(Isyn);
+
+            // Trim history to maxHistory (not maxPoints - we keep more for scrolling)
+            if (stdVHistory.length > maxHistory) {
+                stdVHistory.shift();
+                expVHistory.shift();
+                IsynHistory.shift();
+            }
+
+            // Trim spike arrays to match history window
+            const minTime = time - maxHistory * dt;
+            inputSpikes = inputSpikes.filter(t => t > minTime);
+            stdOutputSpikes = stdOutputSpikes.filter(t => t > minTime);
+            expOutputSpikes = expOutputSpikes.filter(t => t > minTime);
+
+            time += dt;
+
+            // Update time scrubber max value
+            updateTimeScrubber();
+        }
+
+        function getViewWindow() {
+            // Calculate the slice of history to display based on viewOffset
+            const totalPoints = stdVHistory.length;
+            const endIdx = Math.max(0, totalPoints - viewOffset);
+            const startIdx = Math.max(0, endIdx - maxPoints);
+            return { startIdx, endIdx, totalPoints };
+        }
+
+        function draw() {
+            const w = rect.width;
+            const h = rect.height;
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const margin = { top: 25, right: 15, bottom: 25, left: 45 };
+            const plotHeight = (h - margin.top - margin.bottom - 25) / 2;
+
+            const view = getViewWindow();
+
+            // Slice data for current view window
+            const stdVView = stdVHistory.slice(view.startIdx, view.endIdx);
+            const expVView = expVHistory.slice(view.startIdx, view.endIdx);
+            const IsynView = IsynHistory.slice(view.startIdx, view.endIdx);
+
+            drawPlot(
+                margin.left, margin.top,
+                w - margin.left - margin.right, plotHeight,
+                'Membrane Potential (mV)',
+                [
+                    { data: stdVView, color: '#d64545' },
+                    { data: expVView, color: '#2a9d8f' }
+                ],
+                params.EL - 5, params.thresh + 20,
+                true
+            );
+
+            // Calculate max Isyn for the full history to keep scale consistent
+            const maxIsyn = Math.max(50, ...IsynView) + 10;
+            drawPlot(
+                margin.left, margin.top + plotHeight + 25,
+                w - margin.left - margin.right, plotHeight,
+                'Input Current',
+                [
+                    { data: IsynView, color: '#7c3aed' }
+                ],
+                -5, maxIsyn,
+                false
+            );
+
+            // Draw delta impulses for Standard LIF in the current plot
+            drawDeltaImpulses(
+                margin.left, margin.top + plotHeight + 25,
+                w - margin.left - margin.right, plotHeight,
+                -5, maxIsyn
+            );
+
+            drawSpikes(margin.left, margin.top, w - margin.left - margin.right, plotHeight, view);
+        }
+
+        function drawPlot(x, y, w, h, title, series, minY, maxY, showThreshold) {
+            // Grid lines
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const ly = y + (h / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, ly);
+                ctx.lineTo(x + w, ly);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#999';
+            ctx.font = '10px -apple-system, sans-serif';
+            ctx.fillText(title, x, y - 8);
+
+            if (showThreshold) {
+                const threshY = y + h - ((params.thresh - minY) / (maxY - minY)) * h;
+                ctx.strokeStyle = '#f59e0b';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(x, threshY);
+                ctx.lineTo(x + w, threshY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '9px -apple-system, sans-serif';
+                ctx.fillText('Vth', x + w - 18, threshY - 3);
+            }
+
+            series.forEach(s => {
+                if (s.data.length < 2) return;
+
+                ctx.strokeStyle = s.color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+
+                for (let i = 0; i < s.data.length; i++) {
+                    const px = x + (i / maxPoints) * w;
+                    const py = y + h - ((s.data[i] - minY) / (maxY - minY)) * h;
+
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.lineWidth = 1;
+            });
+
+            ctx.fillStyle = '#999';
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(maxY.toFixed(0), x - 5, y + 10);
+            ctx.fillText(minY.toFixed(0), x - 5, y + h);
+            ctx.textAlign = 'left';
+        }
+
+        function drawDeltaImpulses(x, y, w, h, minY, maxY) {
+            // Draw delta (instantaneous) impulses for Standard LIF input
+            // Position based on index in history array to match I_syn positioning exactly
+            const view = getViewWindow();
+
+            ctx.strokeStyle = '#d64545';
+            ctx.lineWidth = 2;
+
+            // Calculate where zero line is
+            const baseY = y + h - ((0 - minY) / (maxY - minY)) * h;
+            // Impulse goes up to represent instantaneous charge injection
+            const impulseTopY = y + 10;
+
+            inputSpikes.forEach(spikeTime => {
+                // Convert spike time to index in full history
+                const spikeIdx = Math.round(spikeTime / params.dt);
+                const currentIdx = Math.round(time / params.dt);
+                const historyIdx = stdVHistory.length - (currentIdx - spikeIdx);
+
+                // Check if spike is in current view window
+                if (historyIdx >= view.startIdx && historyIdx < view.endIdx) {
+                    const viewIdx = historyIdx - view.startIdx;
+                    const px = x + (viewIdx / maxPoints) * w;
+
+                    ctx.beginPath();
+                    ctx.moveTo(px, baseY);
+                    ctx.lineTo(px, impulseTopY);
+                    ctx.stroke();
+                }
+            });
+
+            ctx.lineWidth = 1;
+        }
+
+        function drawSpikes(x, y, w, h, view) {
+            // Calculate time range for current view window
+            const viewEndTime = time - viewOffset * params.dt;
+            const viewStartTime = viewEndTime - maxPoints * params.dt;
+            const timeWindow = maxPoints * params.dt;
+
+            stdOutputSpikes.forEach(t => {
+                if (t >= viewStartTime && t <= viewEndTime) {
+                    const px = x + ((t - viewStartTime) / timeWindow) * w;
+                    ctx.strokeStyle = 'rgba(214, 69, 69, 0.3)';
+                    ctx.beginPath();
+                    ctx.moveTo(px, y);
+                    ctx.lineTo(px, y + h);
+                    ctx.stroke();
+                }
+            });
+
+            expOutputSpikes.forEach(t => {
+                if (t >= viewStartTime && t <= viewEndTime) {
+                    const px = x + ((t - viewStartTime) / timeWindow) * w;
+                    ctx.strokeStyle = 'rgba(42, 157, 143, 0.3)';
+                    ctx.beginPath();
+                    ctx.moveTo(px, y);
+                    ctx.lineTo(px, y + h);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        const timeScrubberEl = document.getElementById('timeScrubber');
+        const timeSlider = document.getElementById('timeSlider');
+        const timeIndicator = document.getElementById('timeIndicator');
+
+        function updateTimeScrubber() {
+            const totalPoints = stdVHistory.length;
+            const maxOffset = Math.max(0, totalPoints - maxPoints);
+            timeSlider.max = maxOffset;
+
+            // When running, keep at latest (offset 0)
+            if (running) {
+                viewOffset = 0;
+                timeSlider.value = maxOffset;
+            }
+
+            updateTimeIndicator();
+        }
+
+        function updateTimeIndicator() {
+            const totalPoints = stdVHistory.length;
+            const viewEndTime = time - viewOffset * params.dt;
+            const viewStartTime = viewEndTime - maxPoints * params.dt;
+
+            const startMs = Math.max(0, viewStartTime).toFixed(0);
+            const endMs = Math.max(0, viewEndTime).toFixed(0);
+            timeIndicator.textContent = `${startMs} - ${endMs} ms`;
+        }
+
+        function setTimeScrubberEnabled(enabled) {
+            if (enabled) {
+                timeScrubberEl.classList.remove('disabled');
+            } else {
+                timeScrubberEl.classList.add('disabled');
+            }
+        }
+
+        timeSlider.addEventListener('input', function() {
+            if (!running) {
+                const maxOffset = Math.max(0, stdVHistory.length - maxPoints);
+                // Slider value goes from 0 (oldest) to maxOffset (latest)
+                // viewOffset goes from maxOffset (oldest) to 0 (latest)
+                viewOffset = maxOffset - parseInt(this.value);
+                updateTimeIndicator();
+                draw();
+            }
+        });
+
+        function animate() {
+            if (!running) return;
+
+            for (let i = 0; i < simSpeed; i++) {
+                const hasSpike = pendingSpikes > 0;
+                if (hasSpike) pendingSpikes--;
+                simulationStep(hasSpike);
+            }
+
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        function injectSpike() {
+            pendingSpikes++;
+            if (!running) {
+                simulationStep(true);
+                draw();
+            }
+        }
+
+        function injectBurst() {
+            pendingSpikes += 5;
+            if (!running) {
+                for (let i = 0; i < 5; i++) {
+                    simulationStep(true);
+                }
+                draw();
+            }
+        }
+
+        document.getElementById('startBtn').addEventListener('click', function() {
+            running = !running;
+            this.textContent = running ? '⏸ Pause' : '▶ Start';
+
+            // Enable time scrubber when paused, disable when running
+            setTimeScrubberEnabled(!running);
+
+            if (running) {
+                // Reset to live view when starting
+                viewOffset = 0;
+                updateTimeScrubber();
+                animate();
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            running = false;
+            document.getElementById('startBtn').textContent = '▶ Start';
+
+            stdV = params.EL;
+            expV = params.EL;
+            Isyn = 0;
+            stdRefrac = 0;
+            expRefrac = 0;
+            stdSpikeCount = 0;
+            expSpikeCount = 0;
+            time = 0;
+            pendingSpikes = 0;
+            viewOffset = 0;
+
+            stdVHistory = [];
+            expVHistory = [];
+            IsynHistory = [];
+            inputSpikes = [];
+            stdOutputSpikes = [];
+            expOutputSpikes = [];
+
+            document.getElementById('stdSpikes').textContent = '0';
+            document.getElementById('expSpikes').textContent = '0';
+
+            setTimeScrubberEnabled(true);
+            updateTimeScrubber();
+            draw();
+        });
+
+        document.getElementById('singleSpikeBtn').addEventListener('click', injectSpike);
+        document.getElementById('burstBtn').addEventListener('click', injectBurst);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                injectSpike();
+            }
+        });
+
+        updateParams();
+        setTimeScrubberEnabled(true);
+        updateTimeScrubber();
+        draw();
+    </script>
+</body>
+</html>
