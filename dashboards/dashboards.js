@@ -8,14 +8,8 @@
 
 const dashboards = [
     {
-        name: "Example Dashboard",
-        folder: "example-dashboard",
-        description: "A template dashboard - replace or delete this when you add your own."
+        name: "LIF Neuron Comparison",
+        folder: "lif-visualization",
+        description: "Interactive visualization comparing Leaky Integrate-and-Fire neuron models."
     },
-    // To add more dashboards, copy this format:
-    // {
-    //     name: "Dashboard Name",
-    //     folder: "folder-name",
-    //     description: "Brief description of what this dashboard shows."
-    // },
 ];
