@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucy Davidson | Personal Website</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo" id="nav-name"></a>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#resume">Resume</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <button class="mobile-menu-btn" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="about" class="about">
+            <div class="container">
+                <h2 class="section-title">About Me</h2>
+                <div class="about-content">
+                    <div class="about-text" id="about-text"></div>
+                    <div class="about-image">
+                        <img src="profile1.jpg" alt="Lucy Davidson">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="projects">
+            <div class="container">
+                <h2 class="section-title">Projects</h2>
+                <div class="projects-grid" id="projects-list"></div>
+            </div>
+        </section>
+
+        <section id="resume" class="resume">
+            <div class="container">
+                <h2 class="section-title">Resume</h2>
+
+                <div class="resume-section">
+                    <h3 class="resume-heading">Experience</h3>
+                    <div class="timeline" id="experience-list"></div>
+                </div>
+
+                <div class="resume-section">
+                    <h3 class="resume-heading">Education</h3>
+                    <div class="timeline" id="education-list"></div>
+                </div>
+
+                <div class="resume-section">
+                    <h3 class="resume-heading">Skills</h3>
+                    <div class="skills-grid" id="skills-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div class="container">
+                <h2 class="section-title">Get in Touch</h2>
+                <p class="contact-intro">I'm always open to discussing research collaborations, academic opportunities, or interesting problems at the intersection of computation and neuroscience.</p>
+                <a href="#" class="btn btn-primary" id="email-btn">Send me an email</a>
+                <div class="social-links" id="social-links"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 <span id="footer-name"></span>. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="content/data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
