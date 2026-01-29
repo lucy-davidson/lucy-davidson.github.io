@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboards | Lucy Davidson</title>
+    <style>
+        :root {
+            --color-bg: #fafafa;
+            --color-bg-secondary: #f4f4f5;
+            --color-text: #18181b;
+            --color-text-muted: #71717a;
+            --color-accent: #0891b2;
+            --color-border: #d4d4d8;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+        }
+
+        .back-link {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .back-link:hover {
+            color: var(--color-accent);
+        }
+
+        h1 {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1::before {
+            content: '#';
+            color: var(--color-accent);
+        }
+
+        .dashboard-list {
+            list-style: none;
+        }
+
+        .dashboard-item {
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .dashboard-item:hover {
+            border-color: var(--color-accent);
+        }
+
+        .dashboard-item a {
+            display: block;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .dashboard-name {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-description {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state {
+            color: var(--color-text-muted);
+            font-style: italic;
+            padding: 2rem;
+            text-align: center;
+            border: 1px dashed var(--color-border);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="back-link">&larr; back to home</a>
+        <h1>Dashboards</h1>
+    </header>
+
+    <main>
+        <ul class="dashboard-list" id="dashboard-list"></ul>
+    </main>
+
+    <script src="dashboards.js"></script>
+    <script>
+        const list = document.getElementById('dashboard-list');
+
+        if (dashboards.length === 0) {
+            list.innerHTML = '<li class="empty-state">No dashboards yet.</li>';
+        } else {
+            dashboards.forEach(dashboard => {
+                list.innerHTML += `
+                    <li class="dashboard-item">
+                        <a href="${dashboard.folder}/">
+                            <div class="dashboard-name">${dashboard.name}</div>
+                            <div class="dashboard-description">${dashboard.description}</div>
+                        </a>
+                    </li>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
