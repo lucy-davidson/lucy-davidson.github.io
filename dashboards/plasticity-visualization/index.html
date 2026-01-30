@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synaptic Plasticity: STDP, BCM, DA-BCM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #333;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            font-weight: 500;
+            color: #111;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .description {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .model-box {
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .model-box h3 {
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .model-box.stdp h3 { color: #3b82f6; }
+        .model-box.bcm h3 { color: #22c55e; }
+        .model-box.dabcm h3 { color: #8b5cf6; }
+
+        .model-box p {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .equation {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.85em;
+            color: #555;
+            background: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .definitions {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            margin-bottom: 30px;
+        }
+
+        .definitions h3 {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .def-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px 24px;
+        }
+
+        .def-item {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .def-item strong {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .simulation {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+
+        .sim-layout {
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            gap: 25px;
+        }
+
+        .neuron-diagram {
+            margin-bottom: 20px;
+        }
+
+        .neuron-diagram canvas {
+            width: 100%;
+            height: 120px;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            text-align: center;
+        }
+
+        .panel-title {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        canvas {
+            border-radius: 4px;
+            background: #fff;
+            border: 1px solid #eee;
+        }
+
+        .panel canvas {
+            width: 100%;
+            height: 180px;
+        }
+
+        .time-series canvas {
+            width: 100%;
+            height: 120px;
+        }
+
+        .time-series {
+            margin-bottom: 15px;
+        }
+
+        .time-series-title {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #666;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 1px;
+        }
+
+        .controls {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .controls h3 {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .control-group label span {
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #333;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            margin-bottom: 8px;
+            background: #fff;
+            color: #333;
+            transition: background 0.15s;
+        }
+
+        button:hover {
+            background: #f5f5f5;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #444;
+        }
+
+        .step-controls {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .step-controls h4 {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-step {
+            background: #f8f8f8;
+            border-color: #ccc;
+        }
+
+        .pattern-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .pattern-section h4 {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .timestep-display {
+            text-align: center;
+            font-size: 0.9em;
+            color: #333;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .timestep-display .step-num {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .event-indicator {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .event-indicator .pre { color: #ef4444; }
+        .event-indicator .post { color: #3b82f6; }
+        .event-indicator .reward { color: #f59e0b; }
+
+        kbd {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+
+        .update-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            font-size: 0.75em;
+        }
+
+        .update-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .update-content {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .update-none {
+            color: #999;
+            font-style: italic;
+        }
+
+        .update-algo {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .update-algo:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .update-algo-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .update-algo-name.stdp { color: #3b82f6; }
+        .update-algo-name.bcm { color: #22c55e; }
+        .update-algo-name.dabcm { color: #8b5cf6; }
+
+        .update-formula {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.95em;
+            color: #666;
+            margin: 2px 0;
+        }
+
+        .update-result {
+            color: #333;
+        }
+
+        .update-result.positive { color: #16a34a; }
+        .update-result.negative { color: #dc2626; }
+        .update-result.zero { color: #999; }
+
+        @media (max-width: 900px) {
+            .description {
+                grid-template-columns: 1fr;
+            }
+            .panels {
+                grid-template-columns: 1fr;
+            }
+            .sim-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Synaptic Plasticity: STDP, BCM, DA-BCM</h1>
+
+        <div class="description">
+            <div class="model-box stdp">
+                <h3>STDP</h3>
+                <p>Spike-timing dependent plasticity. Weight change based on relative timing of pre/post spikes.</p>
+                <div class="equation">Δw = A<sub>+</sub>e<sup>-Δt/τ<sub>+</sub></sup> if Δt > 0</div>
+            </div>
+
+            <div class="model-box bcm">
+                <h3>BCM</h3>
+                <p>Bienenstock-Cooper-Munro rule with weight-dependent soft bounds.</p>
+                <div class="equation">Δw = φ(e)·e<sub>pre</sub>·(1-w) if LTP<br>Δw = φ(e)·e<sub>pre</sub>·w if LTD</div>
+            </div>
+
+            <div class="model-box dabcm">
+                <h3>DA-BCM</h3>
+                <p>Dopamine-modulated BCM. Learning gated by reward signal.</p>
+                <div class="equation">Δw = DA · eligibility</div>
+            </div>
+        </div>
+
+        <div class="definitions">
+            <h3>Variable Definitions</h3>
+            <div class="def-grid">
+                <div class="def-item"><strong>Δt</strong> — time between pre/post spikes (ms)</div>
+                <div class="def-item"><strong>θ<sub>m</sub></strong> — sliding threshold (mean of e<sub>post</sub> over 10 steps)</div>
+                <div class="def-item"><strong>DA</strong> — dopamine signal (reward/error)</div>
+                <div class="def-item"><strong>e<sub>pre</sub>, e<sub>post</sub></strong> — traces with exponential decay (τ<sub>bcm</sub>=3)</div>
+                <div class="def-item"><strong>φ(e)</strong> — BCM function: e·(e - θ<sub>m</sub>)</div>
+                <div class="def-item"><strong>(1-w), w</strong> — soft bounds (weight-dependent scaling)</div>
+            </div>
+        </div>
+
+        <div class="simulation">
+            <div class="sim-layout">
+                <div class="main-area">
+                    <div class="neuron-diagram">
+                        <canvas id="neuronCanvas"></canvas>
+                    </div>
+
+                    <div class="panels">
+                        <div class="panel">
+                            <div class="panel-title">STDP Learning Window</div>
+                            <canvas id="stdpCanvas"></canvas>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-title">BCM Curve</div>
+                            <canvas id="bcmCanvas"></canvas>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-title">DA-BCM (Dopamine-Gated)</div>
+                            <canvas id="dabcmCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="time-series">
+                        <div class="time-series-title">Synaptic Weight Evolution</div>
+                        <canvas id="weightCanvas"></canvas>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #3b82f6;"></div>
+                                <span>STDP</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #22c55e;"></div>
+                                <span>BCM</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #8b5cf6;"></div>
+                                <span>DA-BCM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="time-series">
+                        <div class="time-series-title">Activity & Signals</div>
+                        <canvas id="activityCanvas"></canvas>
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ef4444; height: 8px; width: 2px;"></div>
+                                <span>Pre spike</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #3b82f6; height: 8px; width: 2px;"></div>
+                                <span>Post spike</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #22c55e;"></div>
+                                <span>θ<sub>m</sub></span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #f59e0b;"></div>
+                                <span>Dopamine</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="pattern-section" style="margin-top: 0; padding-top: 0; border-top: none;">
+                        <h4>Load Pattern</h4>
+                        <button class="btn-pattern btn-primary" id="ltpBtn">LTP (pre→post)</button>
+                        <button class="btn-pattern" id="ltdBtn">LTD (post→pre)</button>
+                        <button class="btn-pattern" id="mixedBtn">Mixed</button>
+                        <button class="btn-pattern" id="thresholdBtn">θ Sliding Demo</button>
+                        <button class="btn-pattern" id="bcmLtdBtn">BCM LTD Demo</button>
+                    </div>
+
+                    <div class="timestep-display">
+                        <div>Step <span class="step-num" id="stepNum">0</span> / <span id="totalSteps">0</span></div>
+                        <div class="event-indicator" id="eventIndicator"></div>
+                    </div>
+
+                    <div class="step-controls">
+                        <h4>Step Through</h4>
+                        <div class="btn-row">
+                            <button class="btn-step" id="prevBtn" disabled>← Prev <kbd>←</kbd></button>
+                            <button class="btn-step" id="nextBtn">Next → <kbd>→</kbd></button>
+                        </div>
+                        <button id="resetBtn">Reset</button>
+                    </div>
+
+                    <div class="update-box" id="updateBox">
+                        <div class="update-title">Weight Updates</div>
+                        <div class="update-content" id="updateContent">
+                            <div class="update-none">Load a pattern and step through to see updates</div>
+                        </div>
+                    </div>
+
+                    <div class="pattern-section">
+                        <h4>Parameters</h4>
+                        <div class="control-group">
+                            <label>Learning rate (η) <span id="etaValue">0.01</span></label>
+                            <input type="range" id="eta" min="1" max="50" value="10">
+                        </div>
+                        <div class="control-group">
+                            <label>Time constant (τ) <span id="tauValue">20</span> ms</label>
+                            <input type="range" id="tau" min="5" max="50" value="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup helper
+        function setupCanvas(canvas) {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            return { ctx, width: rect.width, height: rect.height };
+        }
+
+        // Get canvas elements
+        const neuronCanvas = document.getElementById('neuronCanvas');
+        const stdpCanvas = document.getElementById('stdpCanvas');
+        const bcmCanvas = document.getElementById('bcmCanvas');
+        const dabcmCanvas = document.getElementById('dabcmCanvas');
+        const weightCanvas = document.getElementById('weightCanvas');
+        const activityCanvas = document.getElementById('activityCanvas');
+
+        let neuronCtx, stdpCtx, bcmCtx, dabcmCtx, weightCtx, activityCtx;
+        let neuronWidth, neuronHeight;
+        let canvasWidth, canvasHeight, weightHeight, activityHeight;
+
+        function initCanvases() {
+            const neuron = setupCanvas(neuronCanvas);
+            neuronCtx = neuron.ctx;
+            neuronWidth = neuron.width;
+            neuronHeight = neuron.height;
+
+            const stdp = setupCanvas(stdpCanvas);
+            stdpCtx = stdp.ctx;
+            canvasWidth = stdp.width;
+            canvasHeight = stdp.height;
+
+            const bcm = setupCanvas(bcmCanvas);
+            bcmCtx = bcm.ctx;
+
+            const dabcm = setupCanvas(dabcmCanvas);
+            dabcmCtx = dabcm.ctx;
+
+            const weight = setupCanvas(weightCanvas);
+            weightCtx = weight.ctx;
+            weightHeight = weight.height;
+
+            const activity = setupCanvas(activityCanvas);
+            activityCtx = activity.ctx;
+            activityHeight = activity.height;
+        }
+
+        // Simulation parameters (from paper)
+        let params = {
+            // STDP params
+            A_plus: 0.04,
+            A_minus: 0.04,
+            tau_plus: 20,
+            tau_minus: 20,
+            // BCM params (from paper equations 8-11)
+            tau_bcm: 3.0,      // trace decay constant (paper: τ_bcm = 3.0)
+            epsilon: 0.3,      // weight decay coefficient (ε in paper)
+            eta_bcm: 0.08,     // learning rate scaling
+            // DA params
+            tauDA: 5
+        };
+
+        // Pre-generated event sequence
+        let eventSequence = [];
+        let currentStep = 0;
+
+        // State at each step (for navigation)
+        let stateHistory = [];
+
+        // Current state
+        let state = {
+            wSTDP: 0.5,
+            wBCM: 0.5,
+            wDABCM: 0.5,
+            lastPreSpike: false,
+            lastPostSpike: false,
+            lastPreSpikeTime: null,   // Step number of last pre spike (for STDP decay)
+            lastPostSpikeTime: null,  // Step number of last post spike (for STDP decay)
+            currentStep: 0,           // Current step number
+            // BCM traces using paper formula: e^t = τ_bcm * e^(t-1) + o^t
+            ePreBCM: 0,
+            ePostBCM: 0,
+            ePreDABCM: 0,
+            ePostDABCM: 0,
+            thetaM: 0,
+            recentPostTraces: [],  // Last 10 e_post trace values for θ_m
+            dopamine: 0,
+            eligibility: 0,        // Eligibility trace for DA-BCM
+            lastDeltaT: null,
+            // Track what happened for explanations
+            dwSTDP: 0,
+            dwBCM: 0,
+            dwDABCM: 0,
+            stdpReason: '',
+            bcmReason: '',
+            dabcmReason: ''
+        };
+
+        
+        // Sliders
+        const sliders = {
+            eta: document.getElementById('eta'),
+            tau: document.getElementById('tau')
+        };
+
+        const displays = {
+            eta: document.getElementById('etaValue'),
+            tau: document.getElementById('tauValue')
+        };
+
+        function updateParams() {
+            params.eta = parseFloat(sliders.eta.value) / 1000;
+            params.tau = parseFloat(sliders.tau.value);
+            params.tau_plus = params.tau;
+            params.tau_minus = params.tau;
+
+            displays.eta.textContent = params.eta.toFixed(3);
+            displays.tau.textContent = params.tau;
+        }
+
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', updateParams);
+        });
+
+        // Generate preset patterns
+        function generateLTPPattern() {
+            const events = [];
+            // 10 pairs of pre->post with 10ms delay, plus reward
+            for (let i = 0; i < 10; i++) {
+                events.push({ step: i * 5, type: 'pre' });
+                events.push({ step: i * 5 + 1, type: 'post' });
+            }
+            // Reward halfway through
+            events.push({ step: 25, type: 'reward' });
+            // Add empty steps for decay visualization
+            for (let i = 50; i < 80; i++) {
+                events.push({ step: i, type: 'none' });
+            }
+            return events;
+        }
+
+        function generateLTDPattern() {
+            const events = [];
+            // 10 pairs of post->pre with 10ms delay
+            for (let i = 0; i < 10; i++) {
+                events.push({ step: i * 5, type: 'post' });
+                events.push({ step: i * 5 + 1, type: 'pre' });
+            }
+            // Add empty steps for decay visualization
+            for (let i = 50; i < 80; i++) {
+                events.push({ step: i, type: 'none' });
+            }
+            return events;
+        }
+
+        function generateMixedPattern() {
+            const events = [];
+            // Mix of LTP, LTD, and reward
+            // LTP burst
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: i * 4, type: 'pre' });
+                events.push({ step: i * 4 + 1, type: 'post' });
+            }
+            // Reward
+            events.push({ step: 22, type: 'reward' });
+            // LTD burst
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: 25 + i * 4, type: 'post' });
+                events.push({ step: 25 + i * 4 + 1, type: 'pre' });
+            }
+            // More reward + LTP
+            events.push({ step: 50, type: 'reward' });
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: 52 + i * 4, type: 'pre' });
+                events.push({ step: 52 + i * 4 + 1, type: 'post' });
+            }
+            // Decay
+            for (let i = 75; i < 100; i++) {
+                events.push({ step: i, type: 'none' });
+            }
+            return events;
+        }
+
+        function generateThresholdPattern() {
+            // Demonstrates how θ_m sliding changes LTP↔LTD direction
+            const events = [];
+            let step = 0;
+
+            // Phase 1: Moderate activity with low θ → LTP
+            // (θ starts at 0.5, activity will be above it)
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: step, type: 'pre' });
+                events.push({ step: step + 1, type: 'post' });
+                step += 3;
+            }
+
+            // Phase 2: High post activity → θ rises
+            // Rapid post-only firing drives threshold up
+            for (let i = 0; i < 15; i++) {
+                events.push({ step: step, type: 'post' });
+                step += 1;
+            }
+
+            // Brief pause
+            step += 5;
+
+            // Phase 3: Same moderate activity, but now θ is high → LTD
+            // The threshold has risen, so same activity causes depression
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: step, type: 'pre' });
+                events.push({ step: step + 1, type: 'post' });
+                step += 3;
+            }
+
+            // Phase 4: Let θ decay (no post activity)
+            for (let i = 0; i < 30; i++) {
+                events.push({ step: step + i, type: 'none' });
+            }
+            step += 30;
+
+            // Phase 5: Same activity again, θ has fallen → back to LTP
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: step, type: 'pre' });
+                events.push({ step: step + 1, type: 'post' });
+                step += 3;
+            }
+
+            // Add reward in phase 5 to show DA-BCM
+            events.push({ step: step - 10, type: 'reward' });
+
+            // Final decay
+            for (let i = 0; i < 20; i++) {
+                events.push({ step: step + i, type: 'none' });
+            }
+
+            return events;
+        }
+
+        function generateBCMLTDPattern() {
+            // Demonstrates BCM LTD: pre fires when e_post < θ_m
+            const events = [];
+            let step = 0;
+
+            // Phase 1: Build up θ_m with post-only activity
+            // This raises the threshold without changing weight much (no pre)
+            for (let i = 0; i < 20; i++) {
+                events.push({ step: step, type: 'post' });
+                step += 1;
+            }
+
+            // Brief pause to let e_post decay while θ_m stays high
+            step += 3;
+
+            // Phase 2: Pre fires while e_post < θ_m → BCM LTD
+            // e_post has decayed but θ_m is still elevated from phase 1
+            for (let i = 0; i < 10; i++) {
+                events.push({ step: step, type: 'pre' });
+                step += 2;
+                // Occasional weak post to keep some activity but below θ_m
+                if (i % 3 === 0) {
+                    events.push({ step: step, type: 'post' });
+                    step += 1;
+                }
+            }
+
+            // Phase 3: Let system settle
+            for (let i = 0; i < 20; i++) {
+                events.push({ step: step + i, type: 'none' });
+            }
+            step += 20;
+
+            // Phase 4: Now θ_m has dropped, same pre→post gives LTP
+            for (let i = 0; i < 5; i++) {
+                events.push({ step: step, type: 'pre' });
+                events.push({ step: step + 1, type: 'post' });
+                step += 3;
+            }
+
+            // Final decay
+            for (let i = 0; i < 15; i++) {
+                events.push({ step: step + i, type: 'none' });
+            }
+
+            return events;
+        }
+
+        function loadPattern(events) {
+            // Sort by step and normalize
+            events.sort((a, b) => a.step - b.step);
+
+            // Create full sequence with all steps
+            const maxStep = Math.max(...events.map(e => e.step)) + 1;
+            eventSequence = [];
+
+            for (let i = 0; i < maxStep; i++) {
+                const stepEvents = events.filter(e => e.step === i);
+                eventSequence.push({
+                    pre: stepEvents.some(e => e.type === 'pre'),
+                    post: stepEvents.some(e => e.type === 'post'),
+                    reward: stepEvents.some(e => e.type === 'reward')
+                });
+            }
+
+            // Reset state and compute all states
+            resetState();
+            computeAllStates();
+            currentStep = 0;
+            updateDisplay();
+            draw();
+        }
+
+        function resetState() {
+            state = {
+                wSTDP: 0.5,
+                wBCM: 0.5,
+                wDABCM: 0.5,
+                lastPreSpike: false,
+                lastPostSpike: false,
+                lastPreSpikeTime: null,
+                lastPostSpikeTime: null,
+                currentStep: 0,
+                ePreBCM: 0,
+                ePostBCM: 0,
+                ePreDABCM: 0,
+                ePostDABCM: 0,
+                thetaM: 0,
+                recentPostTraces: [],
+                dopamine: 0,
+                eligibility: 0,
+                lastDeltaT: null,
+                dwSTDP: 0,
+                dwBCM: 0,
+                dwDABCM: 0,
+                stdpReason: '',
+                bcmReason: '',
+                dabcmReason: ''
+            };
+            stateHistory = [JSON.parse(JSON.stringify(state))];
+        }
+
+        // BCM function φ(e) = e * (e - θ_m) from paper equation 11
+        function phi(e, theta) {
+            return e * (e - theta);
+        }
+
+        function computeStep(prevState, event) {
+            const s = JSON.parse(JSON.stringify(prevState));
+
+            // Reset tracking
+            s.dwSTDP = 0;
+            s.dwBCM = 0;
+            s.dwDABCM = 0;
+            s.stdpReason = '';
+            s.bcmReason = '';
+            s.dabcmReason = '';
+
+            // --- STDP with exponential decay ---
+            // Δw = A₊ × exp(-Δt/τ₊) for pre→post (LTP)
+            // Δw = -A₋ × exp(-|Δt|/τ₋) for post→pre (LTD)
+
+            s.currentStep++;
+
+            if (event.post && s.lastPreSpikeTime !== null) {
+                // Post spike after a pre spike → LTP
+                const deltaT = s.currentStep - s.lastPreSpikeTime;
+                const decay = Math.exp(-deltaT / params.tau_plus);
+                const dw = params.A_plus * decay;
+                s.dwSTDP = dw;
+                s.lastDeltaT = deltaT;
+                s.stdpReason = `Pre→Post (Δt=${deltaT})\nΔw = ${params.A_plus.toFixed(3)} × e^(-${deltaT}/${params.tau_plus}) = +${dw.toFixed(4)}`;
+                s.wSTDP = Math.max(0, Math.min(1, s.wSTDP + dw));
+            }
+
+            if (event.pre && s.lastPostSpikeTime !== null) {
+                // Pre spike after a post spike → LTD
+                const deltaT = s.currentStep - s.lastPostSpikeTime;
+                const decay = Math.exp(-deltaT / params.tau_minus);
+                const dw = -params.A_minus * decay;
+                s.dwSTDP += dw;  // Add to any LTP that may have occurred
+                s.lastDeltaT = -deltaT;
+                const reason = `Post→Pre (Δt=${deltaT})\nΔw = -${params.A_minus.toFixed(3)} × e^(-${deltaT}/${params.tau_minus}) = ${dw.toFixed(4)}`;
+                s.stdpReason = s.stdpReason ? s.stdpReason + '\n' + reason : reason;
+                s.wSTDP = Math.max(0, Math.min(1, s.wSTDP + dw));
+            }
+
+            if (!event.pre && !event.post) {
+                s.stdpReason = 'No spike → no update';
+            } else if (s.dwSTDP === 0) {
+                if (event.pre) s.stdpReason = 'Pre spike, waiting for post';
+                if (event.post) s.stdpReason = 'Post spike, no recent pre';
+            }
+
+            // Track spike times
+            if (event.pre) s.lastPreSpikeTime = s.currentStep;
+            if (event.post) s.lastPostSpikeTime = s.currentStep;
+            s.lastPreSpike = event.pre;
+            s.lastPostSpike = event.post;
+
+            // --- BCM using paper equations 8-11 ---
+            // Trace update with exponential decay (τ_bcm as time constant)
+            const oPre = event.pre ? 1 : 0;
+            const oPost = event.post ? 1 : 0;
+            const traceDecayBCM = Math.exp(-1 / params.tau_bcm);
+            s.ePreBCM = s.ePreBCM * traceDecayBCM + oPre;
+            s.ePostBCM = s.ePostBCM * traceDecayBCM + oPost;
+
+            // Update θ_m as average of last 10 e_post trace values
+            s.recentPostTraces.push(s.ePostBCM);
+            if (s.recentPostTraces.length > 10) {
+                s.recentPostTraces.shift();
+            }
+            s.thetaM = s.recentPostTraces.reduce((a, b) => a + b, 0) / s.recentPostTraces.length;
+
+            // BCM function: φ(e) = e * (e - θ_m) (equation 11)
+            // θ_m determines LTP vs LTD direction
+            const phiPost = phi(s.ePostBCM, s.thetaM);
+
+            // Weight-dependent scaling (soft bounds)
+            // LTP: scale by (1 - w) — harder to potentiate strong synapses
+            // LTD: scale by w — harder to depress weak synapses
+            let bcmDw;
+            if (phiPost > 0) {
+                bcmDw = params.eta_bcm * phiPost * s.ePreBCM * (1 - s.wBCM);
+            } else {
+                bcmDw = params.eta_bcm * phiPost * s.ePreBCM * s.wBCM;
+            }
+            s.dwBCM = bcmDw;
+            s.wBCM = Math.max(0, Math.min(1, s.wBCM + bcmDw));
+
+            const direction = phiPost > 0 ? 'LTP' : (phiPost < 0 ? 'LTD' : 'none');
+            const scaleFactor = phiPost > 0 ? (1 - s.wBCM).toFixed(2) : s.wBCM.toFixed(2);
+            s.bcmReason = `φ(e)=${phiPost.toFixed(3)} → ${direction}\nscaled by ${scaleFactor} (weight-dep)`;
+
+            // --- DA-BCM using paper equation 12 ---
+            // Same trace formula (exponential decay)
+            s.ePreDABCM = s.ePreDABCM * traceDecayBCM + oPre;
+            s.ePostDABCM = s.ePostDABCM * traceDecayBCM + oPost;
+
+            // φ(e_post) for DA-BCM (uses same θ_m)
+            const phiPostDA = phi(s.ePostDABCM, s.thetaM);
+
+            // Build eligibility trace with weight-dependent scaling
+            let potentialDw;
+            if (phiPostDA > 0) {
+                potentialDw = params.eta_bcm * phiPostDA * s.ePreDABCM * (1 - s.wDABCM);
+            } else {
+                potentialDw = params.eta_bcm * phiPostDA * s.ePreDABCM * s.wDABCM;
+            }
+            s.eligibility = s.eligibility * 0.9 + potentialDw;
+
+            // DA-BCM: Weight changes when dopamine stamps in eligibility
+            const dabcmDw = s.dopamine * s.eligibility;
+            s.dwDABCM = dabcmDw;
+            s.wDABCM = Math.max(0, Math.min(1, s.wDABCM + dabcmDw));
+
+            const directionDA = phiPostDA > 0 ? 'LTP' : (phiPostDA < 0 ? 'LTD' : 'none');
+            if (s.dopamine < 0.01) {
+                s.dabcmReason = `φ(e)=${phiPostDA.toFixed(3)} → ${directionDA}\neligibility=${s.eligibility.toFixed(3)}, DA=0`;
+            } else {
+                s.dabcmReason = `φ(e)=${phiPostDA.toFixed(3)} → ${directionDA}\nDA=${s.dopamine.toFixed(2)} stamps eligibility`;
+            }
+
+            // Dopamine decay
+            if (event.reward) {
+                s.dopamine = 1;
+            } else {
+                s.dopamine *= Math.exp(-1 / params.tauDA);
+            }
+
+            return s;
+        }
+
+        function computeAllStates() {
+            stateHistory = [JSON.parse(JSON.stringify(state))];
+            let currentState = JSON.parse(JSON.stringify(state));
+
+            for (let i = 0; i < eventSequence.length; i++) {
+                currentState = computeStep(currentState, eventSequence[i]);
+                stateHistory.push(JSON.parse(JSON.stringify(currentState)));
+            }
+        }
+
+        function goToStep(step) {
+            step = Math.max(0, Math.min(step, eventSequence.length));
+            currentStep = step;
+            state = JSON.parse(JSON.stringify(stateHistory[step]));
+            updateDisplay();
+            draw();
+        }
+
+        function formatDw(dw) {
+            if (Math.abs(dw) < 0.0001) return '<span class="update-result zero">≈ 0</span>';
+            const sign = dw > 0 ? '+' : '';
+            const cls = dw > 0 ? 'positive' : 'negative';
+            return `<span class="update-result ${cls}">${sign}${dw.toFixed(4)}</span>`;
+        }
+
+        function updateDisplay() {
+            document.getElementById('stepNum').textContent = currentStep;
+            document.getElementById('totalSteps').textContent = eventSequence.length;
+
+            // Update event indicator
+            const indicator = document.getElementById('eventIndicator');
+            if (currentStep > 0 && currentStep <= eventSequence.length) {
+                const event = eventSequence[currentStep - 1];
+                let text = [];
+                if (event.pre) text.push('<span class="pre">PRE</span>');
+                if (event.post) text.push('<span class="post">POST</span>');
+                if (event.reward) text.push('<span class="reward">REWARD</span>');
+                indicator.innerHTML = text.length > 0 ? text.join(' + ') : '(decay)';
+            } else {
+                indicator.innerHTML = '';
+            }
+
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentStep <= 0;
+            document.getElementById('nextBtn').disabled = currentStep >= eventSequence.length;
+
+            // Update explanation box
+            const updateContent = document.getElementById('updateContent');
+            if (currentStep === 0) {
+                updateContent.innerHTML = '<div class="update-none">Step forward to see weight updates</div>';
+            } else {
+                const s = state;
+                updateContent.innerHTML = `
+                    <div class="update-algo">
+                        <div class="update-algo-name stdp">STDP</div>
+                        <div class="update-formula">${s.stdpReason.replace(/\n/g, '<br>')}</div>
+                        <div>Δw = ${formatDw(s.dwSTDP)} → w = ${s.wSTDP.toFixed(3)}</div>
+                    </div>
+                    <div class="update-algo">
+                        <div class="update-algo-name bcm">BCM</div>
+                        <div class="update-formula">${s.bcmReason.replace(/\n/g, '<br>')}</div>
+                        <div>Δw = ${formatDw(s.dwBCM)} → w = ${s.wBCM.toFixed(3)}</div>
+                    </div>
+                    <div class="update-algo">
+                        <div class="update-algo-name dabcm">DA-BCM</div>
+                        <div class="update-formula">${s.dabcmReason.replace(/\n/g, '<br>')}</div>
+                        <div>Δw = ${formatDw(s.dwDABCM)} → w = ${s.wDABCM.toFixed(3)}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Drawing functions
+        function drawNeuronDiagram() {
+            const ctx = neuronCtx;
+            const w = neuronWidth;
+            const h = neuronHeight;
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const centerY = h / 2;
+            const preX = w * 0.2;
+            const postX = w * 0.8;
+            const neuronRadius = 25;
+
+            // Check if current step has spikes
+            const currentEvent = (currentStep > 0 && currentStep <= eventSequence.length)
+                ? eventSequence[currentStep - 1]
+                : { pre: false, post: false, reward: false };
+
+            // Draw synapse (connection line with weight indicator)
+            const avgWeight = (state.wSTDP + state.wBCM + state.wDABCM) / 3;
+            const lineWidth = 2 + avgWeight * 6;
+
+            ctx.strokeStyle = `rgba(100, 100, 100, ${0.3 + avgWeight * 0.5})`;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            ctx.moveTo(preX + neuronRadius, centerY);
+            ctx.lineTo(postX - neuronRadius, centerY);
+            ctx.stroke();
+
+            // Draw synaptic terminal (triangle)
+            ctx.fillStyle = '#666';
+            ctx.beginPath();
+            ctx.moveTo(postX - neuronRadius - 15, centerY - 8);
+            ctx.lineTo(postX - neuronRadius - 15, centerY + 8);
+            ctx.lineTo(postX - neuronRadius - 5, centerY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw pre-synaptic neuron
+            if (currentEvent.pre) {
+                // Firing: solid red
+                ctx.fillStyle = '#ef4444';
+            } else {
+                // Not firing: light gray
+                ctx.fillStyle = '#f8f8f8';
+            }
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(preX, centerY, neuronRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw post-synaptic neuron
+            if (currentEvent.post) {
+                // Firing: solid blue
+                ctx.fillStyle = '#3b82f6';
+            } else {
+                // Not firing: light gray
+                ctx.fillStyle = '#f8f8f8';
+            }
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(postX, centerY, neuronRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Pre', preX, centerY + neuronRadius + 18);
+            ctx.fillText('Post', postX, centerY + neuronRadius + 18);
+
+            // Weight labels
+            ctx.font = '10px -apple-system, sans-serif';
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillText(`STDP: ${state.wSTDP.toFixed(2)}`, w / 2, centerY - 25);
+            ctx.fillStyle = '#22c55e';
+            ctx.fillText(`BCM: ${state.wBCM.toFixed(2)}`, w / 2, centerY - 12);
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillText(`DA-BCM: ${state.wDABCM.toFixed(2)}`, w / 2, centerY + 1);
+
+            // Dopamine indicator
+            if (state.dopamine > 0.01) {
+                ctx.fillStyle = `rgba(245, 158, 11, ${Math.min(1, state.dopamine)})`;
+                ctx.font = '11px -apple-system, sans-serif';
+                ctx.fillText(`DA: ${state.dopamine.toFixed(2)}`, w / 2, centerY + 35);
+            }
+        }
+
+        function drawSTDPPanel() {
+            const ctx = stdpCtx;
+            const w = canvasWidth;
+            const h = canvasHeight;
+            const margin = { top: 25, right: 15, bottom: 30, left: 40 };
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const plotW = w - margin.left - margin.right;
+            const plotH = h - margin.top - margin.bottom;
+
+            // Draw axes
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + plotH / 2);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH / 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(margin.left + plotW / 2, margin.top);
+            ctx.lineTo(margin.left + plotW / 2, margin.top + plotH);
+            ctx.stroke();
+
+            // Draw STDP curve
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const dtRange = 100;
+            for (let i = 0; i <= plotW; i++) {
+                const dt = (i / plotW - 0.5) * 2 * dtRange;
+                let dw;
+                if (dt > 0) {
+                    dw = params.A_plus * Math.exp(-dt / params.tau_plus);
+                } else {
+                    dw = -params.A_minus * Math.exp(dt / params.tau_minus);
+                }
+                const x = margin.left + i;
+                const y = margin.top + plotH / 2 - dw * plotH * 8;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Draw recent delta t marker
+            if (state.lastDeltaT !== null) {
+                const clampedDt = Math.max(-dtRange, Math.min(dtRange, state.lastDeltaT));
+                const markerX = margin.left + (clampedDt / dtRange / 2 + 0.5) * plotW;
+                let markerDw;
+                if (state.lastDeltaT > 0) {
+                    markerDw = params.A_plus * Math.exp(-Math.abs(state.lastDeltaT) / params.tau_plus);
+                } else {
+                    markerDw = -params.A_minus * Math.exp(-Math.abs(state.lastDeltaT) / params.tau_minus);
+                }
+                const markerY = margin.top + plotH / 2 - markerDw * plotH * 8;
+
+                ctx.fillStyle = state.lastDeltaT > 0 ? '#22c55e' : '#ef4444';
+                ctx.beginPath();
+                ctx.arc(markerX, markerY, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Δt (ms)', margin.left + plotW / 2, h - 5);
+            ctx.fillText('-100', margin.left + 5, h - 15);
+            ctx.fillText('+100', margin.left + plotW - 5, h - 15);
+
+            ctx.fillStyle = '#22c55e';
+            ctx.fillText('LTP', margin.left + plotW * 0.75, margin.top + 12);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('LTD', margin.left + plotW * 0.25, margin.top + plotH - 5);
+        }
+
+        function drawBCMPanel() {
+            const ctx = bcmCtx;
+            const w = canvasWidth;
+            const h = canvasHeight;
+            const margin = { top: 25, right: 15, bottom: 30, left: 40 };
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const plotW = w - margin.left - margin.right;
+            const plotH = h - margin.top - margin.bottom;
+
+            // Determine max trace value for scaling (traces can grow > 1 with τ_bcm = 3)
+            const maxTrace = Math.max(5, state.ePostBCM * 1.5, state.thetaM * 1.5);
+
+            // Draw horizontal axis (φ = 0)
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + plotH / 2);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH / 2);
+            ctx.stroke();
+
+            // Draw BCM parabola: φ(e) = e * (e - θ_m)
+            // This is a parabola that crosses 0 at e=0 and e=θ_m
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const phiScale = plotH / (maxTrace * maxTrace * 0.5);  // Scale for visibility
+            for (let i = 0; i <= plotW; i++) {
+                const e = (i / plotW) * maxTrace;
+                const phiVal = e * (e - state.thetaM);
+                const x = margin.left + i;
+                const y = margin.top + plotH / 2 - phiVal * phiScale;
+                const clampedY = Math.max(margin.top, Math.min(margin.top + plotH, y));
+                if (i === 0) ctx.moveTo(x, clampedY);
+                else ctx.lineTo(x, clampedY);
+            }
+            ctx.stroke();
+
+            // Draw sliding threshold line (where φ = 0, i.e., e = θ_m)
+            const thetaX = margin.left + (state.thetaM / maxTrace) * plotW;
+            if (thetaX >= margin.left && thetaX <= margin.left + plotW) {
+                ctx.strokeStyle = '#f59e0b';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(thetaX, margin.top);
+                ctx.lineTo(thetaX, margin.top + plotH);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '9px -apple-system, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('θ=' + state.thetaM.toFixed(1), thetaX, margin.top - 5);
+            }
+
+            // Draw current e_post position on curve
+            const actX = margin.left + (state.ePostBCM / maxTrace) * plotW;
+            const actPhi = phi(state.ePostBCM, state.thetaM);
+            const actY = margin.top + plotH / 2 - actPhi * phiScale;
+
+            if (actX >= margin.left && actX <= margin.left + plotW) {
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.arc(actX, Math.max(margin.top, Math.min(margin.top + plotH, actY)), 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('e_post', margin.left + plotW / 2, h - 5);
+            ctx.fillText('0', margin.left, h - 15);
+            ctx.fillText(maxTrace.toFixed(0), margin.left + plotW, h - 15);
+
+            ctx.fillStyle = '#22c55e';
+            ctx.fillText('LTP', margin.left + plotW - 15, margin.top + 12);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('LTD', margin.left + 15, margin.top + plotH - 5);
+        }
+
+        function drawDABCMPanel() {
+            const ctx = dabcmCtx;
+            const w = canvasWidth;
+            const h = canvasHeight;
+            const margin = { top: 25, right: 25, bottom: 30, left: 40 };
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const plotW = w - margin.left - margin.right;
+            const plotH = h - margin.top - margin.bottom;
+
+            // Determine max trace value for scaling
+            const maxTrace = Math.max(5, state.ePostDABCM * 1.5, state.thetaM * 1.5);
+            const phiScale = plotH / (maxTrace * maxTrace * 0.5);
+
+            // Draw horizontal axis (φ = 0)
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + plotH / 2);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH / 2);
+            ctx.stroke();
+
+            // Draw BCM parabola as reference (faded)
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            for (let i = 0; i <= plotW; i++) {
+                const e = (i / plotW) * maxTrace;
+                const phiVal = e * (e - state.thetaM);
+                const x = margin.left + i;
+                const y = margin.top + plotH / 2 - phiVal * phiScale;
+                const clampedY = Math.max(margin.top, Math.min(margin.top + plotH, y));
+                if (i === 0) ctx.moveTo(x, clampedY);
+                else ctx.lineTo(x, clampedY);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw DA-modulated parabola (scaled by dopamine)
+            ctx.strokeStyle = '#8b5cf6';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.3 + 0.7 * state.dopamine;
+            ctx.beginPath();
+            for (let i = 0; i <= plotW; i++) {
+                const e = (i / plotW) * maxTrace;
+                const phiVal = state.dopamine * e * (e - state.thetaM);
+                const x = margin.left + i;
+                const y = margin.top + plotH / 2 - phiVal * phiScale;
+                const clampedY = Math.max(margin.top, Math.min(margin.top + plotH, y));
+                if (i === 0) ctx.moveTo(x, clampedY);
+                else ctx.lineTo(x, clampedY);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            // Draw sliding threshold line
+            const thetaX = margin.left + (state.thetaM / maxTrace) * plotW;
+            if (thetaX >= margin.left && thetaX <= margin.left + plotW) {
+                ctx.strokeStyle = '#f59e0b';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(thetaX, margin.top);
+                ctx.lineTo(thetaX, margin.top + plotH);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Draw current e_post position
+            const actX = margin.left + (state.ePostDABCM / maxTrace) * plotW;
+            const actPhi = state.dopamine * phi(state.ePostDABCM, state.thetaM);
+            const actY = margin.top + plotH / 2 - actPhi * phiScale;
+
+            if (actX >= margin.left && actX <= margin.left + plotW) {
+                ctx.fillStyle = '#8b5cf6';
+                ctx.beginPath();
+                ctx.arc(actX, Math.max(margin.top, Math.min(margin.top + plotH, actY)), 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw dopamine level indicator
+            const daBarWidth = 12;
+            const daBarHeight = plotH * state.dopamine;
+            ctx.fillStyle = '#f59e0b';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(w - margin.right + 5, margin.top + plotH - daBarHeight, daBarWidth, daBarHeight);
+            ctx.globalAlpha = 1;
+
+            ctx.strokeStyle = '#f59e0b';
+            ctx.strokeRect(w - margin.right + 5, margin.top, daBarWidth, plotH);
+
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('e_post', margin.left + plotW / 2, h - 5);
+            ctx.fillText('0', margin.left, h - 15);
+            ctx.fillText(maxTrace.toFixed(0), margin.left + plotW, h - 15);
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillText('DA', w - margin.right + 5 + daBarWidth / 2, margin.top - 5);
+
+            if (state.dopamine < 0.1) {
+                ctx.fillStyle = '#999';
+                ctx.font = '10px -apple-system, sans-serif';
+                ctx.fillText('(gated)', margin.left + plotW / 2, margin.top + plotH / 2 - 15);
+            }
+        }
+
+        function drawWeightTimeSeries() {
+            const ctx = weightCtx;
+            const w = weightCanvas.getBoundingClientRect().width;
+            const h = weightHeight;
+            const margin = { top: 15, right: 15, bottom: 20, left: 40 };
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const plotW = w - margin.left - margin.right;
+            const plotH = h - margin.top - margin.bottom;
+
+            // Grid lines
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const ly = margin.top + (plotH / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, ly);
+                ctx.lineTo(margin.left + plotW, ly);
+                ctx.stroke();
+            }
+
+            if (stateHistory.length < 2) return;
+
+            const totalSteps = stateHistory.length - 1;
+
+            function drawCurve(getData, color) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let i = 0; i <= currentStep; i++) {
+                    const px = margin.left + (i / totalSteps) * plotW;
+                    const py = margin.top + plotH - getData(stateHistory[i]) * plotH;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+
+            drawCurve(s => s.wSTDP, '#3b82f6');
+            drawCurve(s => s.wBCM, '#22c55e');
+            drawCurve(s => s.wDABCM, '#8b5cf6');
+
+            // Current position marker
+            const currentX = margin.left + (currentStep / totalSteps) * plotW;
+            ctx.strokeStyle = '#333';
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(currentX, margin.top);
+            ctx.lineTo(currentX, margin.top + plotH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Y-axis labels
+            ctx.fillStyle = '#999';
+            ctx.font = '9px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('1.0', margin.left - 5, margin.top + 5);
+            ctx.fillText('0.5', margin.left - 5, margin.top + plotH / 2 + 3);
+            ctx.fillText('0.0', margin.left - 5, margin.top + plotH);
+        }
+
+        function drawActivityTimeSeries() {
+            const ctx = activityCtx;
+            const w = activityCanvas.getBoundingClientRect().width;
+            const h = activityHeight;
+            const margin = { top: 15, right: 15, bottom: 15, left: 40 };
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+
+            const plotW = w - margin.left - margin.right;
+            const plotH = h - margin.top - margin.bottom;
+
+            if (eventSequence.length === 0) return;
+
+            const totalSteps = eventSequence.length;
+
+            // Draw spike raster
+            for (let i = 0; i < Math.min(currentStep, totalSteps); i++) {
+                const event = eventSequence[i];
+                const px = margin.left + ((i + 0.5) / totalSteps) * plotW;
+
+                if (event.pre) {
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(px, margin.top + plotH * 0.1);
+                    ctx.lineTo(px, margin.top + plotH * 0.35);
+                    ctx.stroke();
+                }
+
+                if (event.post) {
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(px, margin.top + plotH * 0.4);
+                    ctx.lineTo(px, margin.top + plotH * 0.65);
+                    ctx.stroke();
+                }
+
+                if (event.reward) {
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(px, margin.top + plotH * 0.85, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Draw theta_m and dopamine curves
+            if (stateHistory.length > 1) {
+                // Find max trace value for scaling
+                let maxTrace = 1;
+                for (let i = 0; i <= currentStep; i++) {
+                    maxTrace = Math.max(maxTrace, stateHistory[i].thetaM, stateHistory[i].ePostBCM);
+                }
+
+                // Theta (show in bottom portion of plot)
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let i = 0; i <= currentStep; i++) {
+                    const px = margin.left + (i / (stateHistory.length - 1)) * plotW;
+                    const normalizedTheta = stateHistory[i].thetaM / maxTrace;
+                    const py = margin.top + plotH - normalizedTheta * plotH * 0.35;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // Dopamine (show in bottom portion of plot)
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let i = 0; i <= currentStep; i++) {
+                    const px = margin.left + (i / (stateHistory.length - 1)) * plotW;
+                    const py = margin.top + plotH - stateHistory[i].dopamine * plotH * 0.35;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+
+            // Current position marker
+            const currentX = margin.left + (currentStep / totalSteps) * plotW;
+            ctx.strokeStyle = '#333';
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(currentX, margin.top);
+            ctx.lineTo(currentX, margin.top + plotH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels
+            ctx.fillStyle = '#999';
+            ctx.font = '8px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('Pre', margin.left - 5, margin.top + plotH * 0.25);
+            ctx.fillText('Post', margin.left - 5, margin.top + plotH * 0.55);
+            ctx.fillStyle = '#22c55e';
+            ctx.fillText('θm', margin.left - 5, margin.top + plotH * 0.85);
+        }
+
+        function draw() {
+            drawNeuronDiagram();
+            drawSTDPPanel();
+            drawBCMPanel();
+            drawDABCMPanel();
+            drawWeightTimeSeries();
+            drawActivityTimeSeries();
+        }
+
+        // Event listeners
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            goToStep(currentStep - 1);
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            goToStep(currentStep + 1);
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (eventSequence.length > 0) {
+                resetState();
+                computeAllStates();
+                currentStep = 0;
+                updateDisplay();
+                draw();
+            }
+        });
+
+        function selectPatternButton(selectedBtn) {
+            document.querySelectorAll('.btn-pattern').forEach(btn => {
+                btn.classList.remove('btn-primary');
+            });
+            selectedBtn.classList.add('btn-primary');
+        }
+
+        document.getElementById('ltpBtn').addEventListener('click', function() {
+            selectPatternButton(this);
+            loadPattern(generateLTPPattern());
+        });
+
+        document.getElementById('ltdBtn').addEventListener('click', function() {
+            selectPatternButton(this);
+            loadPattern(generateLTDPattern());
+        });
+
+        document.getElementById('mixedBtn').addEventListener('click', function() {
+            selectPatternButton(this);
+            loadPattern(generateMixedPattern());
+        });
+
+        document.getElementById('thresholdBtn').addEventListener('click', function() {
+            selectPatternButton(this);
+            loadPattern(generateThresholdPattern());
+        });
+
+        document.getElementById('bcmLtdBtn').addEventListener('click', function() {
+            selectPatternButton(this);
+            loadPattern(generateBCMLTDPattern());
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                goToStep(currentStep - 1);
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                goToStep(currentStep + 1);
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', function() {
+            initCanvases();
+            updateParams();
+
+            // Load LTP pattern by default
+            loadPattern(generateLTPPattern());
+        });
+
+        window.addEventListener('resize', function() {
+            initCanvases();
+            draw();
+        });
+    </script>
+</body>
+</html>

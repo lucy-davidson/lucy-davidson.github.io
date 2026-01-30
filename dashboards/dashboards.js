@@ -12,4 +12,9 @@ const dashboards = [
         folder: "lif-visualization",
         description: "Interactive visualization comparing Leaky Integrate-and-Fire neuron models."
     },
+    {
+        name: "Synaptic Plasticity",
+        folder: "plasticity-visualization",
+        description: "Interactive comparison of STDP, BCM, and DA-BCM plasticity rules."
+    },
 ];
