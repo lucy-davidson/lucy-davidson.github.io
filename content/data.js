@@ -10,10 +10,10 @@ const siteContent = {
 
     // --- ABOUT SECTION ---
     about: [
-        "A curious human augmented by AI",
-        "Academic interests are neural networks and learning. Currently exploring a biologically-plausible learning algorithm for motor control tasks.",
-        "Career interests include discovering the basis of knowledge and learning, creating new technology to improve healthcare, and designing beautifully intuitive applications."
-    ],
+        "Builder exploring learning systems, neural inspiration, and how theoretical ideas turn into useful, well-designed things.",
+        "Currently researching and experimenting with a biologically-plausible learning algorithm for motor control tasks.
+    
+        ],
 
     // --- SOCIAL LINKS ---
     social: {
@@ -72,29 +72,29 @@ const siteContent = {
     // --- PROJECTS ---
     // Add or remove projects as needed
     projects: [
-        {
-            title: "Neural Decoding Pipeline",
-            description: "Python toolkit for decoding cognitive states from fMRI data using machine learning classifiers.",
-            links: [
-                { label: "Paper", url: "#" },
-                { label: "GitHub", url: "#" }
-            ]
-        },
-        {
-            title: "Spiking Neural Network Simulator",
-            description: "Efficient simulator for large-scale spiking neural networks with biologically realistic dynamics.",
-            links: [
-                { label: "Documentation", url: "#" },
-                { label: "GitHub", url: "#" }
-            ]
-        },
-        {
-            title: "EEG Preprocessing Library",
-            description: "Open-source library for automated artifact rejection and preprocessing of EEG recordings.",
-            links: [
-                { label: "PyPI", url: "#" },
-                { label: "GitHub", url: "#" }
-            ]
-        }
+        // {
+        //     title: "Neural Decoding Pipeline",
+        //     description: "Python toolkit for decoding cognitive states from fMRI data using machine learning classifiers.",
+        //     links: [
+        //         { label: "Paper", url: "#" },
+        //         { label: "GitHub", url: "#" }
+        //     ]
+        // },
+        // {
+        //     title: "Spiking Neural Network Simulator",
+        //     description: "Efficient simulator for large-scale spiking neural networks with biologically realistic dynamics.",
+        //     links: [
+        //         { label: "Documentation", url: "#" },
+        //         { label: "GitHub", url: "#" }
+        //     ]
+        // },
+        // {
+        //     title: "EEG Preprocessing Library",
+        //     description: "Open-source library for automated artifact rejection and preprocessing of EEG recordings.",
+        //     links: [
+        //         { label: "PyPI", url: "#" },
+        //         { label: "GitHub", url: "#" }
+        //     ]
+        // }
     ]
 };
