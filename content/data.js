@@ -10,8 +10,8 @@ const siteContent = {
 
     // --- ABOUT SECTION ---
     about: [
-        "Builder exploring learning systems, neural inspiration, and how theoretical ideas turn into useful, well-designed things.",
-        "Currently researching and experimenting with a biologically-plausible learning algorithm for motor control tasks."
+        "I'm a computer scientist exploring learning systems, neural inspiration, and how theoretical ideas turn into useful, well-designed things.",
+        "Currently working on a master's thesis researching and experimenting with a biologically-plausible learning algorithm for motor control tasks."
         ],
 
     // --- SOCIAL LINKS ---
